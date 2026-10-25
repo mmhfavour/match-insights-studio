@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!--HEAD-START-->
+<title>Match Insights Studio</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Noto+Sans+Devanagari:wght@400;600&family=Noto+Sans+Tamil:wght@400;600&display=swap">
+<!--HEAD-END-->
+<link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+<!--BODY-START-->
+<div class="wrap">
+  <header class="topbar">
+    <div class="brand">
+      <h1>Match Insights Studio</h1>
+      <span class="tag" id="srcTag">Synthetic match · live</span>
+    </div>
+    <div class="controls" role="group" aria-label="Viewer profile">
+      <label class="field"><span>Mode</span>
+        <div class="seg" id="modeSeg">
+          <button type="button" data-v="analyst" aria-pressed="true">Analyst</button>
+          <button type="button" data-v="casual" aria-pressed="false">Casual fan</button>
+          <button type="button" data-v="player" aria-pressed="false">Player focus</button>
+        </div>
+      </label>
+      <label class="field"><span>Language</span>
+        <div class="seg" id="langSeg">
+          <button type="button" data-v="en" aria-pressed="true">EN</button>
+          <button type="button" data-v="hi" aria-pressed="false">हिन्दी</button>
+          <button type="button" data-v="ta" aria-pressed="false">தமிழ்</button>
+        </div>
+      </label>
+      <label class="field" for="clubSel"><span>My club</span>
+        <select id="clubSel"><option value="">Neutral</option></select>
+      </label>
+      <label class="field" for="playerSel" id="playerField" hidden><span>Player</span>
+        <select id="playerSel"></select>
+      </label>
+    </div>
+  </header>
+
+  <main class="stage">
+    <section style="display:grid;gap:10px;min-width:0">
+      <div class="feed" id="feed">
+        <canvas id="pitch" aria-label="Top-down match feed"></canvas>
+        <div class="gfx" id="gfx">
+          <div class="bug" id="bug" aria-live="polite">
+            <span class="team"><i id="homeChip"></i><span id="homeCode">HOM</span></span>
+            <span class="score"><span id="sh">0</span><span>-</span><span id="sa">0</span></span>
+            <span class="team"><span id="awayCode">AWY</span><i id="awayChip"></i></span>
+            <span class="clock" id="clock">00:00</span>
+          </div>
+          <div class="live-dot" id="liveDot"><b></b><span id="liveLbl">Live</span></div>
+          <div class="ticker" id="ticker"></div>
+        </div>
+      </div>
+      <div class="transport" id="transport">
+        <button class="btn primary" type="button" id="playBtn">Pause</button>
+        <div class="seg" id="speedSeg" aria-label="Replay speed">
+          <button type="button" data-v="15" aria-pressed="false">15×</button>
+          <button type="button" data-v="30" aria-pressed="true">30×</button>
+          <button type="button" data-v="60" aria-pressed="false">60×</button>
+        </div>
+        <div class="scrub" id="scrubWrap"><input type="range" id="scrub" min="0" max="100" step="1" value="0" aria-label="Match time"></div>
+        <div class="chips" id="jumps"></div>
+      </div>
+    </section>
+
+    <aside class="rail" id="rail">
+      <div class="panel" id="statsPanel"></div>
+      <div class="panel" id="flowPanel"></div>
+    </aside>
+  </main>
+
+  <section class="panel">
+    <h2>Moments <small id="momCount">0 aired</small></h2>
+    <div class="moments" id="moments"><div class="empty">Overlays appear here as the director puts them to air.</div></div>
+  </section>
+
+  <footer class="foot">
+    <span>All clubs, players and data are synthetic.</span>
+    <span id="agentInfo"></span>
+    <a href="/producer" id="deskLink" style="color:var(--accent)">Open the producer desk</a>
+  </footer>
+</div>
+
+<aside class="drawer" id="drawer" hidden aria-label="Why this overlay"></aside>
+<!--BODY-END-->
+<script src="/static/pitch.js"></script>
+<script src="/static/viewer.js"></script>
+</body>
+</html>

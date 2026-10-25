@@ -1,0 +1,18 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "replay",
+      "runtimeExecutable": ".venv/Scripts/python.exe",
+      "runtimeArgs": ["-m", "http.server", "8765", "--directory", "dist"],
+      "port": 8765
+    },
+    {
+      "name": "server",
+      "runtimeExecutable": "../.venv/Scripts/python.exe",
+      "runtimeArgs": ["-m", "uvicorn", "app.server:app", "--port", "8000"],
+      "cwd": "backend",
+      "port": 8000
+    }
+  ]
+}

@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Producer Desk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+<div class="wrap">
+  <header class="topbar">
+    <div class="brand">
+      <h1>Producer Desk</h1>
+      <span class="tag" id="score">Match Insights Studio</span>
+    </div>
+    <div class="controls">
+      <button class="btn" type="button" data-c="pause">Pause</button>
+      <button class="btn" type="button" data-c="resume">Resume</button>
+      <button class="btn danger" type="button" data-c="restart">Restart match</button>
+      <div class="seg" id="speedSeg" aria-label="Replay speed">
+        <button type="button" data-v="15" aria-pressed="false">15×</button>
+        <button type="button" data-v="30" aria-pressed="true">30×</button>
+        <button type="button" data-v="60" aria-pressed="false">60×</button>
+      </div>
+      <label class="toggle" for="autoChk"><input type="checkbox" id="autoChk" checked> Auto-air after <select id="autoDelay"><option value="3">3 s</option><option value="5" selected>5 s</option><option value="10">10 s</option></select></label>
+      <a class="btn" href="/" target="_blank" rel="noopener">Open viewer</a>
+    </div>
+  </header>
+
+  <section class="panel">
+    <h2>Desk metrics <small id="agentMode"></small></h2>
+    <div class="tiles" id="tiles"></div>
+  </section>
+
+  <main class="desk">
+    <section class="panel">
+      <h2>Proposed overlays <small>newest first</small></h2>
+      <div class="queue" id="queue"><div class="empty">The director proposes overlays here as moments happen. Approve, edit or reject before they air.</div></div>
+    </section>
+    <section class="panel">
+      <h2>Audit trail <small id="auditCount"></small></h2>
+      <div class="audit-wrap">
+        <table class="audit"><thead><tr><th>Clock</th><th>Action</th><th>By</th><th>Moment</th></tr></thead><tbody id="audit"></tbody></table>
+      </div>
+    </section>
+  </main>
+</div>
+<script src="/static/producer.js"></script>
+</body>
+</html>
