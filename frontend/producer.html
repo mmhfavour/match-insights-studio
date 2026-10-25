@@ -6,15 +6,18 @@
 <title>Producer Desk</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap">
 <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
 <div class="wrap">
   <header class="topbar">
     <div class="brand">
-      <h1>Producer Desk</h1>
-      <span class="tag" id="score">Match Insights Studio</span>
+      <span class="mark" aria-hidden="true"></span>
+      <div>
+        <h1>Producer desk</h1>
+        <span class="tag" id="score">Match Insights Studio</span>
+      </div>
     </div>
     <div class="controls">
       <button class="btn" type="button" data-c="pause">Pause</button>
@@ -31,13 +34,13 @@
   </header>
 
   <section class="panel">
-    <h2>Desk metrics <small id="agentMode"></small></h2>
+    <h2>How the desk is doing <small id="agentMode"></small></h2>
     <div class="tiles" id="tiles"></div>
   </section>
 
   <main class="desk">
     <section class="panel">
-      <h2>Proposed overlays <small>newest first</small></h2>
+      <h2>Waiting for a decision <small>newest first</small></h2>
       <div class="queue" id="queue"><div class="empty">The director proposes overlays here as moments happen. Approve, edit or reject before they air.</div></div>
     </section>
     <section class="panel">

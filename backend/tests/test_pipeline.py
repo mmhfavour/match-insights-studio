@@ -58,6 +58,42 @@ def test_story_moments_are_detected(timeline):
     assert "counterpress_regain" in goal_84["evidence"]["why_tags"]
 
 
+def test_goal_build_up_is_explained_beyond_the_assist(timeline):
+    goals = {m["minute"]: m for m in timeline["moments"] if m["type"] == "goal"}
+    keys = {minute: [p["key"] for p in m["analysis"]["patterns"]] for minute, m in goals.items()}
+    assert "short_passing" in keys["19'"] and "third_man" in keys["19'"]
+    assert goals["19'"]["analysis"]["summary"]["passes"] >= 12
+    assert "overload" in keys["62'"] and "time_space" in keys["62'"]
+    regain = goals["84'"]["analysis"]
+    assert regain["origin"]["type"] == "regain" and regain["origin"]["how"] == "counterpress"
+    assert keys["84'"][0] == "high_regain" and "box_entry" in keys["84'"]
+    for m in goals.values():
+        a = m["analysis"]
+        assert m["evidence"]["build_up"] == keys[m["minute"]][:3]
+        assert a["steps"] and a["steps"][-1]["type"] == "shot"
+        assert len(a["frame"]["players"]) == 22
+    assert len(timeline["chances"]) == sum(t["shots"] for t in timeline["final"]["teams"].values())
+
+
+def test_every_build_up_sentence_passes_the_verifier(roster):
+    data = generate_match(DEFAULT_SEED)
+    interp = Interpreter(data["match"])
+    checked = 0
+    for ev in data["events"]:
+        interp.ingest(ev)
+        if ev["type"] != "shot":
+            continue
+        a = interp.buildup.analyze(len(interp.events) - 1)
+        for lang in LANGS:
+            assert len(a["copy"][lang]) == len(a["patterns"])
+            for p, c in zip(a["patterns"], a["copy"][lang]):
+                assert "{" not in c["text"], c
+                problems = verify({"headline": c["label"], "body": c["text"]}, {"evidence": p["facts"]}, roster)
+                assert problems == [], (p, c, problems)
+                checked += 1
+    assert checked > 100
+
+
 def test_every_template_variant_passes_the_verifier(timeline, roster):
     assert timeline["stats"]["template_verifier_failures"] == 0
     for m in timeline["moments"]:

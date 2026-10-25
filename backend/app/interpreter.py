@@ -9,6 +9,8 @@ from __future__ import annotations
 import bisect
 from collections import defaultdict
 
+from .buildup import BuildUp
+
 L = 105.0
 
 # Thresholds that trigger player tags and moments.
@@ -60,6 +62,12 @@ class Interpreter:
         self.team = {c: defaultdict(float) for c in (self.home, self.away)}
         self.pstats: dict[str, defaultdict] = defaultdict(lambda: defaultdict(float))
         self.on_pitch = {p["id"] for side in ("home", "away") for p in match[side]["players"]}
+        # Shape for the positional model: substitutes inherit the slot of the player they replace.
+        self.shape = {pid: {"team": p["team"], "role": p["role"], "base_x": p["base_x"], "base_y": p["base_y"]}
+                      for pid, p in self.players.items()}
+        self.buildup = BuildUp(self)
+        self.chances: list[dict] = []
+        self._last_goal_analysis: dict | None = None
         self.poss_team: str | None = None
         self.poss_since = 0.0
         self.poss_changes: list[tuple[float, str]] = []
@@ -276,6 +284,8 @@ class Interpreter:
             out.append(self._sub_moment(ev))
             self.on_pitch.discard(d["player_off"])
             self.on_pitch.add(d["player_on"])
+            off = self.shape[d["player_off"]]
+            self.shape[d["player_on"]].update(role=off["role"], base_x=off["base_x"], base_y=off["base_y"])
         elif et == "physical":
             for p, m in d["distance_m"].items():
                 self.pstats[p]["distance_m"] += m
@@ -307,8 +317,11 @@ class Interpreter:
 
     def _check_shot(self, ev: dict) -> list[dict]:
         d, pid, out = ev["data"], ev["player"], []
+        analysis = self.buildup.analyze(len(self.events) - 1)
+        self.chances.append(self.buildup.compact(analysis, ev))
         if d["outcome"] == "goal":
             self._last_goal_chain = self._chain_summary(ev)
+            self._last_goal_analysis = analysis
             return out
         if d["xg"] >= BIG_CHANCE_XG:
             out.append(self._moment("big_chance", ev, ev["team"], [pid], {
@@ -317,7 +330,9 @@ class Interpreter:
                 "distance_m": round(d["distance_m"]), "outcome": d["outcome"],
                 "shot_speed_kmh": round(d["speed_kmh"]),
                 "team_xg": round(self.team[ev["team"]]["xg"], 2),
-                "team_goals": self.score[ev["team"]]}))
+                "team_goals": self.score[ev["team"]],
+                "build_up": [p["key"] for p in analysis["patterns"][:3]]}))
+            out[-1]["analysis"] = analysis
         elif d["speed_kmh"] >= ROCKET_SHOT_KMH and self._ready("rocket", 300):
             out.append(self._moment("rocket_shot", ev, ev["team"], [pid], {
                 "player": self.name(pid), "team_name": self.team_names[ev["team"]],
@@ -364,6 +379,9 @@ class Interpreter:
             "chain_passes": chain["passes"], "chain_seconds": chain["seconds"],
             "why_tags": tags,
         }
+        analysis = self._last_goal_analysis
+        if analysis and analysis["shot_event"] == shot["id"]:
+            ev_["build_up"] = [p["key"] for p in analysis["patterns"][:3]]
         if chain.get("regain"):
             ev_["regain_player"] = self.name(chain["regain"]["player"])
         # Link the goal to a recent tactical shift so the Narrator can explain *why* it happened.
@@ -391,7 +409,10 @@ class Interpreter:
         players = [pid, d.get("assist")]
         if chain.get("regain"):
             players.append(chain["regain"]["player"])
-        return self._moment("goal", ev, team, players, ev_)
+        m = self._moment("goal", ev, team, players, ev_)
+        if analysis and analysis["shot_event"] == shot["id"]:
+            m["analysis"] = analysis
+        return m
 
     def _card_moment(self, ev: dict) -> dict:
         d = ev["data"]
@@ -550,6 +571,7 @@ class Interpreter:
             "momentum_home": self.momentum(t),
             "control": ctl,
             "series": self.series[-30:],
+            "chances": list(self.chances),
             "players": players,
             "leaders": {"top_speed": {"player": top_speed[0], "value": top_speed[1]["top_speed"]},
                         "distance": {"player": top_dist[0], "value": top_dist[1]["distance_km"]}},

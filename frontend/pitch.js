@@ -118,7 +118,10 @@
         pitch: cs.getPropertyValue("--pitch").trim() || "#1D5A3D",
         pitch2: cs.getPropertyValue("--pitch-2").trim() || "#205F41",
         line: cs.getPropertyValue("--pitch-line").trim() || "rgba(255,255,255,.5)",
-        accent: cs.getPropertyValue("--accent").trim() || "#F2B33D",
+        ink: cs.getPropertyValue("--ink").trim() || "#1B1C19",
+        bad: cs.getPropertyValue("--bad").trim() || "#C4432F",
+        fill: cs.getPropertyValue("--player-fill").trim() || "#FFFFFF",
+        fillInk: cs.getPropertyValue("--player-ink").trim() || "#1B1C19",
       };
     }
 
@@ -152,7 +155,7 @@
       ctx.fillStyle = this.c.pitch2;
       for (let i = 0; i < stripes; i += 2) ctx.fillRect(X(i * sw), Y(0), sw * s, W * s);
 
-      ctx.strokeStyle = this.c.line; ctx.lineWidth = Math.max(1, 0.18 * s);
+      ctx.strokeStyle = this.c.line; ctx.lineWidth = Math.max(1.2, 0.24 * s);
       ctx.strokeRect(X(0), Y(0), L * s, W * s);
       ctx.beginPath(); ctx.moveTo(X(52.5), Y(0)); ctx.lineTo(X(52.5), Y(W)); ctx.stroke();
       ctx.beginPath(); ctx.arc(X(52.5), Y(34), 9.15 * s, 0, Math.PI * 2); ctx.stroke();
@@ -176,9 +179,9 @@
         const age = (now - this.lastPass.at) / 1000;
         if (age < 1.6 && this.lastPass.ex != null) {
           ctx.save();
-          ctx.globalAlpha = Math.max(0, 1 - age / 1.6) * 0.85;
-          ctx.strokeStyle = this.lastPass.ok ? "#ffffff" : "#ff8a80";
-          ctx.setLineDash([0.9 * s, 0.7 * s]); ctx.lineWidth = 0.28 * s;
+          ctx.globalAlpha = Math.max(0, 1 - age / 1.6) * 0.7;
+          ctx.strokeStyle = this.lastPass.ok ? this.c.ink : this.c.bad;
+          ctx.setLineDash([0.9 * s, 0.7 * s]); ctx.lineWidth = 0.26 * s; ctx.lineCap = "round";
           ctx.beginPath(); ctx.moveTo(X(this.lastPass.x), Y(this.lastPass.y)); ctx.lineTo(X(this.lastPass.ex), Y(this.lastPass.ey)); ctx.stroke();
           ctx.restore();
         }
@@ -188,15 +191,16 @@
         if (age < 2.4) {
           ctx.save();
           ctx.globalAlpha = Math.max(0, 1 - age / 2.4);
-          ctx.strokeStyle = this.c.accent; ctx.lineWidth = 0.45 * s;
+          ctx.strokeStyle = this.c.ink; ctx.lineWidth = 0.42 * s; ctx.lineCap = "round";
           ctx.beginPath(); ctx.moveTo(X(this.lastShot.x), Y(this.lastShot.y)); ctx.lineTo(X(this.lastShot.ex), Y(this.lastShot.ey)); ctx.stroke();
           ctx.restore();
         }
       }
 
       // players
-      const r = 1.35 * s;
-      ctx.font = `700 ${Math.round(1.55 * s)}px "Barlow Condensed", "Arial Narrow", sans-serif`;
+      const r = 1.45 * s;
+      const numFont = `700 ${Math.round(1.45 * s)}px Figtree, system-ui, sans-serif`;
+      ctx.font = numFont;
       ctx.textAlign = "center"; ctx.textBaseline = "middle";
       for (const side of [this.home, this.away]) {
         for (const id of this.onPitch[side]) {
@@ -204,23 +208,29 @@
           if (!p) continue;
           const isFocus = id === this.focus, hl = this.highlight.has(id);
           if (isFocus || hl) {
-            ctx.beginPath(); ctx.arc(X(p.x), Y(p.y), r + 0.9 * s, 0, Math.PI * 2);
-            ctx.strokeStyle = this.c.accent; ctx.lineWidth = 0.42 * s; ctx.stroke();
+            ctx.beginPath(); ctx.arc(X(p.x), Y(p.y), r + 0.85 * s, 0, Math.PI * 2);
+            ctx.strokeStyle = this.c.ink; ctx.lineWidth = 0.3 * s; ctx.stroke();
           }
+          // A soft drop shadow, then a white disc ringed in the team colour, like a player avatar.
+          ctx.beginPath(); ctx.arc(X(p.x), Y(p.y) + 0.22 * s, r, 0, Math.PI * 2);
+          ctx.fillStyle = "rgba(20,30,20,.16)"; ctx.fill();
           ctx.beginPath(); ctx.arc(X(p.x), Y(p.y), r, 0, Math.PI * 2);
-          ctx.fillStyle = this.color[side]; ctx.fill();
-          ctx.lineWidth = 0.18 * s; ctx.strokeStyle = "rgba(0,0,0,.35)"; ctx.stroke();
-          ctx.fillStyle = "#fff"; ctx.fillText(String(pl.number), X(p.x), Y(p.y) + 0.08 * s);
+          ctx.fillStyle = this.c.fill; ctx.fill();
+          ctx.lineWidth = 0.42 * s; ctx.strokeStyle = this.color[side]; ctx.stroke();
+          ctx.fillStyle = this.c.fillInk; ctx.fillText(String(pl.number), X(p.x), Y(p.y) + 0.1 * s);
           if (isFocus) {
-            ctx.font = `600 ${Math.round(1.5 * s)}px "IBM Plex Sans", system-ui, sans-serif`;
-            ctx.fillStyle = "#fff"; ctx.fillText(pl.short.toUpperCase(), X(p.x), Y(p.y) + r + 1.3 * s);
-            ctx.font = `700 ${Math.round(1.55 * s)}px "Barlow Condensed", "Arial Narrow", sans-serif`;
+            ctx.font = `600 ${Math.round(1.4 * s)}px Figtree, system-ui, sans-serif`;
+            const label = pl.short, tw = ctx.measureText(label).width + 1.4 * s, ty = Y(p.y) + r + 1.9 * s;
+            ctx.fillStyle = this.c.ink;
+            ctx.beginPath(); ctx.roundRect(X(p.x) - tw / 2, ty - 1.05 * s, tw, 2.1 * s, 1.05 * s); ctx.fill();
+            ctx.fillStyle = this.c.fill; ctx.fillText(label, X(p.x), ty + 0.08 * s);
+            ctx.font = numFont;
           }
         }
       }
       // ball
       ctx.beginPath(); ctx.arc(X(this.ball.x), Y(this.ball.y), 0.75 * s, 0, Math.PI * 2);
-      ctx.fillStyle = "#ffffff"; ctx.fill(); ctx.lineWidth = 0.2 * s; ctx.strokeStyle = "#0E1A22"; ctx.stroke();
+      ctx.fillStyle = "#ffffff"; ctx.fill(); ctx.lineWidth = 0.24 * s; ctx.strokeStyle = this.c.ink; ctx.stroke();
     }
   }
 

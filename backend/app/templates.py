@@ -352,3 +352,120 @@ def render(moment: dict, mode: str = "analyst", lang: str = "en", club: str | No
     if s and mode == "casual" and club_name:
         b.insert(0, _f("persp_" + s, lang, {"club": club_name}))
     return {"headline": h, "body": " ".join(b)}
+
+
+# ---------------------------------------------------------------- build-up analysis
+# One label and one sentence per pattern found by buildup.py. Sentences only use the pattern's facts,
+# so they pass the same verifier as overlays (see tests).
+BUILDUP_LABEL: dict[str, dict[str, str]] = {
+    "counter_attack": {"en": "Counterattack", "hi": "काउंटर-अटैक", "ta": "எதிர்த்தாக்குதல்"},
+    "high_regain": {"en": "High regain", "hi": "ऊँचे पर गेंद जीती", "ta": "மேலே பந்து மீட்பு"},
+    "short_passing": {"en": "Short passing sequence", "hi": "छोटे पासों की कड़ी", "ta": "குறும் பாஸ் தொடர்"},
+    "set_piece": {"en": "Set piece", "hi": "सेट पीस", "ta": "செட் பீஸ்"},
+    "box_entry": {"en": "Into the penalty area", "hi": "पेनल्टी एरिया में प्रवेश", "ta": "பெனால்டி பகுதிக்குள்"},
+    "half_space": {"en": "Half-space attack", "hi": "हाफ़-स्पेस से हमला", "ta": "ஹாஃப்-ஸ்பேஸ் தாக்குதல்"},
+    "third_man": {"en": "Third-man run", "hi": "थर्ड-मैन रन", "ta": "மூன்றாம் வீரர் ஓட்டம்"},
+    "one_two": {"en": "One-two", "hi": "वन-टू", "ta": "ஒன்-டூ"},
+    "switch_play": {"en": "Switch of play", "hi": "खेल की दिशा बदली", "ta": "ஆட்டத் திசை மாற்றம்"},
+    "line_break": {"en": "Line-breaking pass", "hi": "लाइन तोड़ता पास", "ta": "வரிசை உடைக்கும் பாஸ்"},
+    "second_ball": {"en": "Second ball", "hi": "सेकंड बॉल", "ta": "இரண்டாம் பந்து"},
+    "overload": {"en": "Numerical overload", "hi": "संख्या में बढ़त", "ta": "எண்ணிக்கை மேலாதிக்கம்"},
+    "time_space": {"en": "Time and space", "hi": "समय और जगह", "ta": "நேரமும் இடமும்"},
+}
+
+BUILDUP_TEXT: dict[str, dict[str, str]] = {
+    "counter_attack": {"en": "{player} won it back, then {progress_m} m covered in {seconds}s with {passes} passes.",
+                       "hi": "{player} ने गेंद जीती, फिर {seconds} सेकंड और {passes} पास में {progress_m} मीटर आगे।",
+                       "ta": "{player} பந்தை மீட்டார்; பிறகு {seconds} வினாடியில் {passes} பாஸ்களில் {progress_m} மீ முன்னேற்றம்."},
+    "high_regain": {"en": "{player} won the ball {regain_m_from_goal} m from goal; the shot came {seconds}s later.",
+                    "hi": "{player} ने गोल से {regain_m_from_goal} मीटर पर गेंद छीनी; {seconds} सेकंड में शॉट।",
+                    "ta": "{player} கோலிலிருந்து {regain_m_from_goal} மீ தூரத்தில் பந்தைப் பறித்தார்; {seconds} வினாடியில் ஷாட்."},
+    "high_regain_cp": {"en": "Counter-press: {player} won it back {regain_m_from_goal} m from goal, shot {seconds}s later.",
+                       "hi": "काउंटर-प्रेस: {player} ने गोल से {regain_m_from_goal} मीटर पर गेंद वापस जीती, {seconds} सेकंड में शॉट।",
+                       "ta": "கவுண்டர்-பிரஸ்: {player} கோலிலிருந்து {regain_m_from_goal} மீ தூரத்தில் பந்தை மீட்டார், {seconds} வினாடியில் ஷாட்."},
+    "short_passing": {"en": "{passes} passes in {seconds}s, average {avg_pass_m} m, {players} players involved.",
+                      "hi": "{seconds} सेकंड में {passes} पास, औसत {avg_pass_m} मीटर, {players} खिलाड़ी शामिल।",
+                      "ta": "{seconds} வினாடியில் {passes} பாஸ்கள், சராசரி {avg_pass_m} மீ, {players} வீரர்கள் பங்கேற்பு."},
+    "set_piece_corner": {"en": "Came from a corner taken by {player}.", "hi": "{player} के कॉर्नर से बना मौका।",
+                         "ta": "{player} எடுத்த கார்னரிலிருந்து வந்த வாய்ப்பு."},
+    "set_piece_free_kick": {"en": "Came from a free kick, {passes} passes before the shot.",
+                            "hi": "फ़्री-किक से बना, शॉट से पहले {passes} पास।",
+                            "ta": "ஃப்ரீ கிக்கிலிருந்து வந்தது, ஷாட்டுக்கு முன் {passes} பாஸ்கள்."},
+    "box_entry_pass": {"en": "{player} found {recipient} in the box with a {method_t}.",
+                       "hi": "{player} ने {method_t} से बॉक्स में {recipient} को ढूँढा।",
+                       "ta": "{player} {method_t} மூலம் பெட்டிக்குள் {recipient}-ஐ கண்டார்."},
+    "box_entry_run": {"en": "{player} took the ball into the penalty area.",
+                      "hi": "{player} गेंद लेकर पेनल्टी एरिया में घुसे।",
+                      "ta": "{player} பந்துடன் பெனால்டி பகுதிக்குள் நுழைந்தார்."},
+    "half_space": {"en": "Worked through the {side_t} half-space: {actions} actions there in the final third.",
+                   "hi": "{side_t} हाफ़-स्पेस से हमला: फ़ाइनल थर्ड में वहाँ {actions} एक्शन।",
+                   "ta": "{side_t} ஹாஃப்-ஸ்பேஸ் வழியாகத் தாக்குதல்: இறுதி மூன்றில் அங்கு {actions} நகர்வுகள்."},
+    "third_man": {"en": "{first} played into {wall}, who set {runner} free {gain_m} m further on.",
+                  "hi": "{first} ने {wall} को पास दिया, जिसने {runner} को {gain_m} मीटर आगे खोल दिया।",
+                  "ta": "{first} பந்தை {wall}-க்கு கொடுத்தார்; அவர் {runner}-ஐ {gain_m} மீ முன்னே விடுவித்தார்."},
+    "one_two": {"en": "One-two between {player} and {partner}, {gain_m} m gained.",
+                "hi": "{player} और {partner} का वन-टू, {gain_m} मीटर की बढ़त।",
+                "ta": "{player} – {partner} ஒன்-டூ, {gain_m} மீ முன்னேற்றம்."},
+    "switch_play": {"en": "{player} switched play {width_m} m across the pitch.",
+                    "hi": "{player} ने खेल {width_m} मीटर दूसरी तरफ़ घुमाया।",
+                    "ta": "{player} ஆட்டத்தை {width_m} மீ குறுக்கே மாற்றினார்."},
+    "line_break": {"en": "{player} broke a line to {recipient}: {progress_m} m forward, difficulty {difficulty}.",
+                   "hi": "{player} का {recipient} को लाइन तोड़ता पास: {progress_m} मीटर आगे, कठिनाई {difficulty}।",
+                   "ta": "{player} → {recipient} வரிசை உடைக்கும் பாஸ்: {progress_m} மீ முன்னே, கடினம் {difficulty}."},
+    "second_ball_rebound": {"en": "{player} picked up the rebound {seconds_after}s after an earlier shot.",
+                            "hi": "पिछले शॉट के {seconds_after} सेकंड बाद {player} ने रिबाउंड उठाया।",
+                            "ta": "முந்தைய ஷாட்டுக்கு {seconds_after} வினாடிக்குப் பின் {player} ரீபவுண்டை எடுத்தார்."},
+    "second_ball_clearance": {"en": "{player} won the loose ball {seconds_after}s after a clearance.",
+                              "hi": "क्लियरेंस के {seconds_after} सेकंड बाद {player} ने ढीली गेंद जीती।",
+                              "ta": "கிளியரன்ஸுக்கு {seconds_after} வினாடிக்குப் பின் {player} தளர்ந்த பந்தை வென்றார்."},
+    "overload": {"en": "{attackers} v {defenders} within {radius_m} m of the ball, {zone_t}.",
+                 "hi": "गेंद के {radius_m} मीटर में {attackers} बनाम {defenders}, {zone_t}।",
+                 "ta": "பந்திலிருந்து {radius_m} மீ-க்குள் {attackers} vs {defenders}, {zone_t}."},
+    "time_space": {"en": "{player} shot unpressed from {distance_m} m; nearest defender about {nearest_defender_m} m away.",
+                   "hi": "{player} ने बिना दबाव {distance_m} मीटर से शॉट लिया; सबसे पास डिफ़ेंडर करीब {nearest_defender_m} मीटर दूर।",
+                   "ta": "{player} அழுத்தமின்றி {distance_m} மீ தூரத்திலிருந்து ஷாட்; அருகிலுள்ள டிஃபெண்டர் சுமார் {nearest_defender_m} மீ."},
+}
+
+BUILDUP_WORDS: dict[str, dict[str, str]] = {
+    "through": {"en": "through ball", "hi": "थ्रू बॉल", "ta": "த்ரூ பால்"},
+    "cross": {"en": "cross", "hi": "क्रॉस", "ta": "கிராஸ்"},
+    "cutback": {"en": "cut-back", "hi": "कट-बैक", "ta": "கட்-பேக்"},
+    "pass": {"en": "pass", "hi": "पास", "ta": "பாஸ்"},
+    "left": {"en": "left", "hi": "बाएँ", "ta": "இடது"},
+    "right": {"en": "right", "hi": "दाएँ", "ta": "வலது"},
+    "centre": {"en": "through the centre", "hi": "बीच में", "ta": "மையத்தில்"},
+    "left_half_space": {"en": "in the left half-space", "hi": "बाएँ हाफ़-स्पेस में", "ta": "இடது ஹாஃப்-ஸ்பேஸில்"},
+    "right_half_space": {"en": "in the right half-space", "hi": "दाएँ हाफ़-स्पेस में", "ta": "வலது ஹாஃப்-ஸ்பேஸில்"},
+    "left_wing": {"en": "on the left wing", "hi": "बाएँ विंग पर", "ta": "இடது விங்கில்"},
+    "right_wing": {"en": "on the right wing", "hi": "दाएँ विंग पर", "ta": "வலது விங்கில்"},
+}
+
+
+def _bw(key: str | None, lang: str) -> str:
+    return BUILDUP_WORDS.get(key or "", {}).get(lang, key or "")
+
+
+def render_buildup(patterns: list[dict], lang: str = "en") -> list[dict]:
+    """Label and sentence for each build-up pattern, in one language."""
+    if lang not in LANGS:
+        lang = "en"
+    out = []
+    for p in patterns:
+        k, f = p["key"], {key: _num(v) for key, v in p["facts"].items()}
+        if k == "high_regain" and f.get("counterpress"):
+            tk = "high_regain_cp"
+        elif k == "set_piece":
+            tk = "set_piece_corner" if f.get("kind") == "corner" and f.get("player") else "set_piece_free_kick"
+        elif k == "box_entry":
+            tk = "box_entry_pass" if f.get("recipient") else "box_entry_run"
+            f["method_t"] = _bw(f.get("method"), lang)
+        elif k == "second_ball":
+            tk = "second_ball_rebound" if f.get("after") == "rebound" else "second_ball_clearance"
+        else:
+            tk = k
+        if k == "half_space":
+            f["side_t"] = _bw(f.get("side"), lang)
+        if k == "overload":
+            f["zone_t"] = _bw(f.get("zone"), lang)
+        out.append({"key": k, "label": BUILDUP_LABEL[k][lang], "text": BUILDUP_TEXT[tk][lang].format_map(_Safe(f))})
+    return out

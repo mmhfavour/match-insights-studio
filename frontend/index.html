@@ -8,7 +8,7 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Noto+Sans+Devanagari:wght@400;600&family=Noto+Sans+Tamil:wght@400;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;600&family=Noto+Sans+Tamil:wght@400;600&display=swap">
 <!--HEAD-END-->
 <link rel="stylesheet" href="/static/styles.css">
 </head>
@@ -17,11 +17,14 @@
 <div class="wrap">
   <header class="topbar">
     <div class="brand">
-      <h1>Match Insights Studio</h1>
-      <span class="tag" id="srcTag">Synthetic match · live</span>
+      <span class="mark" aria-hidden="true"></span>
+      <div>
+        <h1>Match Insights Studio</h1>
+        <span class="tag" id="srcTag">Synthetic match, live</span>
+      </div>
     </div>
     <div class="controls" role="group" aria-label="Viewer profile">
-      <label class="field"><span>Mode</span>
+      <label class="field"><span>Watching as</span>
         <div class="seg" id="modeSeg">
           <button type="button" data-v="analyst" aria-pressed="true">Analyst</button>
           <button type="button" data-v="casual" aria-pressed="false">Casual fan</button>
@@ -45,7 +48,7 @@
   </header>
 
   <main class="stage">
-    <section style="display:grid;gap:10px;min-width:0">
+    <section class="screen">
       <div class="feed" id="feed">
         <canvas id="pitch" aria-label="Top-down match feed"></canvas>
         <div class="gfx" id="gfx">
@@ -77,15 +80,28 @@
     </aside>
   </main>
 
-  <section class="panel">
-    <h2>Moments <small id="momCount">0 aired</small></h2>
-    <div class="moments" id="moments"><div class="empty">Overlays appear here as the director puts them to air.</div></div>
-  </section>
+  <div class="lower-grid">
+    <section class="card mint" id="analysisPanel" aria-labelledby="anTitle">
+      <div class="card-head">
+        <h2 id="anTitle">Goal analysis</h2>
+        <div class="seg small" id="anTabs" aria-label="Analysis view">
+          <button type="button" data-v="one" aria-pressed="true">How it was built</button>
+          <button type="button" data-v="all" aria-pressed="false">All chances</button>
+        </div>
+      </div>
+      <div id="anBody"><div class="empty">When a goal or a big chance arrives, this shows the whole move behind it: where the ball was won, the passes and runs, and the patterns that opened the defence.</div></div>
+    </section>
+
+    <section class="card butter">
+      <h2>Moments <small id="momCount">0 aired</small></h2>
+      <div class="moments" id="moments"><div class="empty">Overlays land here as the director puts them to air.</div></div>
+    </section>
+  </div>
 
   <footer class="foot">
-    <span>All clubs, players and data are synthetic.</span>
+    <span>Every club, player and number here is synthetic.</span>
     <span id="agentInfo"></span>
-    <a href="/producer" id="deskLink" style="color:var(--accent)">Open the producer desk</a>
+    <a href="/producer" id="deskLink">Open the producer desk</a>
   </footer>
 </div>
 

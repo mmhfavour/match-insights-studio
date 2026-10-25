@@ -24,13 +24,14 @@ backend/app/
   teams.py         fictional clubs and squads (Northvale Rovers NVR, Port Saltmere FC PSM)
   simulator.py     seeded match generator; scripted story beats; CLI: python -m app.simulator --seed 21
   interpreter.py   stats (xG, PPDA, press rate, momentum, control vs chaos) and moment detection with evidence
+  buildup.py       goal/chance build-up analysis: origin of the move, patterns (counterattack, third-man run, half-space, overload...), freeze frame
   templates.py     deterministic EN/HI/TA copy for every moment type and mode; the fallback that always airs
   verifier.py      code gate: every number and player name must trace to evidence; length and banned terms
   agents.py        Narrator, Personalizer, Recapper on Microsoft Agent Framework + FoundryChatClient; repair loop
   pipeline.py      Director (what airs, for whom), overlay record contract, offline timeline builder
   server.py        FastAPI + WebSockets: /ws/viewer, /ws/producer, /api/*, /replay, /producer
   static_build.py  single-file replay page with every overlay variant inlined
-backend/tests/     pytest (12 tests)
+backend/tests/     pytest (14 tests)
 frontend/          plain HTML/CSS/JS, no build step: index.html + viewer.js + pitch.js, producer.html + producer.js
 infra/main.bicep   Container Apps, ACR, managed identity, Log Analytics
 scripts/deploy.sh  one-command az containerapp up + identity + Azure AI User role

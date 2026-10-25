@@ -73,6 +73,7 @@ def overlay_record(moment: dict, copy: dict, audiences: list[str], profile_key: 
         "graphic": graphic,
         "evidence": e,
         "context": moment.get("context", {}),
+        "analysis": moment.get("analysis"),
         "why": copy.get("why"),
         "latency_ms": copy.get("latency_ms"),
     }
@@ -100,6 +101,7 @@ def build_timeline(seed: int = DEFAULT_SEED, script: str = "default", snapshot_e
         if ev["t"] >= next_snap or ev["type"] in ("goal", "period_end", "match_end"):
             snap = interp.snapshot()
             snap.pop("series", None)
+            snap.pop("chances", None)
             snapshots.append(snap)
             next_snap = ev["t"] + snapshot_every
         for m in new:
@@ -127,6 +129,7 @@ def build_timeline(seed: int = DEFAULT_SEED, script: str = "default", snapshot_e
         "events": [compact_event(e) for e in events if e["type"] != "physical"],
         "snapshots": snapshots,
         "series": interp.series,
+        "chances": interp.chances,
         "moments": moments,
         "overlays": overlays,
         "audit": audit,
