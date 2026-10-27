@@ -9,7 +9,7 @@ Project: https://innovationstudio.microsoft.com/hackathons/insidethegamedevelope
 - **Keywords:** multi-agent-system, Microsoft Agent Framework, Microsoft Foundry, personalization, broadcast overlays
 - **Challenge:** The Synthetic Match Insights Engine for Premier League Studio
 - **Open to join:** No (solo)
-- **Code repository:** https://gitlab.com/orbilab/match-insights-studio
+- **Code repository:** https://github.com/mmhfavour/match-insights-studio
 
 ## Description (paste as is; fill the video URL)
 
@@ -38,7 +38,7 @@ The demo runs in template mode: the whole pipeline with deterministic, verifier-
 ## Try it
 - Replay (single page, no install): https://claude.ai/artifact/KtRhVKYyWpQM9X1HqxLqbL
 - Demo video: [YouTube URL]
-- Code: https://gitlab.com/orbilab/match-insights-studio
+- Code: https://github.com/mmhfavour/match-insights-studio
 - Run locally: `cd backend && pip install -r requirements.txt && python -m uvicorn app.server:app --port 8000`, then open `/` (viewer), `/producer` (producer desk), `/replay`.
 
 ## Data
