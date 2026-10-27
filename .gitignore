@@ -5,3 +5,9 @@ __pycache__/
 .venv/
 dist/
 .DS_Store
+
+# private hackathon notes, kept locally
+docs/HANDOFF.md
+docs/challenge-brief.md
+docs/email-5-days-left.png
+docs/research-report.md

@@ -1,6 +1,10 @@
 # Match Insights Studio
 
-An AI insights engine on Azure that turns synthetic football events into explained, personalized, producer-approved broadcast overlays.
+A multi-agent insights engine that turns synthetic football events into explained, personalized, producer-approved broadcast overlays.
+
+**Watch it:** [self-contained replay of the seed-21 match](https://claude.ai/artifact/KtRhVKYyWpQM9X1HqxLqbL) (one HTML file, no install). Or run it locally in two commands (below).
+
+> **Status for judging.** The public demo runs in **template mode**: the full pipeline (simulator, interpreter, goal analysis, Director, Verifier, producer desk, EN/HI/TA copy) with deterministic, verifier-checked copy. The Narrator, Personalizer and Recapper agents are implemented on Microsoft Agent Framework with `FoundryChatClient`, and their repair loop and fallbacks are covered by tests with a stand-in model, but no Azure subscription was available to us during the hackathon, so they have not been run against a live Foundry deployment and the app is not hosted on Azure. Setting two environment variables switches them on (see *Turn on the agents*).
 
 Built for the Microsoft and Premier League **Inside the Game: Developer Hackathon**, challenge *The Synthetic Match Insights Engine for Premier League Studio*. Target category: **Best Multi-Agent System**.
 
@@ -60,7 +64,7 @@ flowchart LR
 
 - **Agents**: Microsoft Agent Framework `Agent` objects backed by `FoundryChatClient` (Microsoft Foundry). Narrator, Personalizer and Recapper each have one job and a JSON contract. They hand off through the shared moment record. Model calls time out (default 12 s) and fall back so the broadcast never stalls.
 - **Server**: FastAPI with WebSockets. One endpoint for viewers, one for the producer desk, REST for the overlay feed, audit trail and controls.
-- **Hosting**: Azure Container Apps with a managed identity (keyless access to Foundry). Infrastructure in `infra/main.bicep`; one-command deploy in `scripts/deploy.sh`.
+- **Hosting (prepared, not yet deployed)**: Azure Container Apps with a managed identity (keyless access to Foundry). Infrastructure in `infra/main.bicep`; one-command deploy in `scripts/deploy.sh`.
 - **Built with GitHub Copilot**: `.github/copilot-instructions.md` encodes the pipeline rules.
 
 ## Overlay contract
@@ -104,7 +108,11 @@ python -m uvicorn app.server:app --reload --port 8000
 - Producer desk: http://localhost:8000/producer
 - Self-contained replay (no socket needed): http://localhost:8000/replay
 
-Without Foundry settings it runs in **template mode**: the same pipeline, with deterministic copy in all three languages. To turn on the agents:
+Without Foundry settings it runs in **template mode**: the same pipeline, with deterministic copy in all three languages.
+
+### Turn on the agents
+
+With a Microsoft Foundry project and a model deployment:
 
 ```bash
 az login
@@ -141,7 +149,7 @@ Covers: deterministic generation, realistic match totals, story-moment detection
 
 ## How it maps to the judging criteria
 
-- **Technological implementation**: Foundry plus Agent Framework, a code verifier with a repair loop, deterministic synthetic data with realism tests, Container Apps with keyless auth, CI.
+- **Technological implementation**: agents on Agent Framework with a Foundry client, a code verifier with a repair loop, deterministic synthetic data with realism tests, move-by-move goal analysis from the raw event stream, Container Apps infrastructure with keyless auth, CI.
 - **Agentic design and innovation**: distinct agents with narrow contracts, shared state through the moment record, a verifier handoff that recovers from failures, and a human producer in the loop.
 - **Real-world impact**: explainable overlays a studio can trust; one feed serving analysts, casual fans and regional audiences.
 - **UX and presentation**: a tactical feed with broadcast graphics, a "Why?" drawer that shows the evidence behind every overlay, and instant switching between modes and languages.
